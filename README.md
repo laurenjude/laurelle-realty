@@ -41,21 +41,6 @@ Laurelle Realty is a modern real estate web application that combines polished p
 
 ## Setup
 
-```bash
-# Clone the repo
-git clone https://github.com/YOUR-USERNAME/laurelle-realty.git
-cd laurelle-realty
-
-# Install dependencies
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Add your Supabase URL and anon key to .env
-
-# Run development server
-npm run dev
-```
 
 ## Architecture
 
@@ -65,7 +50,7 @@ This is a multi-phase project built incrementally. Each phase adds a complete, t
 
 **Lauren Jude** — AI Automation Builder
 
-- LinkedIn: [Your LinkedIn URL]
+- LinkedIn: [ https://www.linkedin.com/in/lauren-jude-ifeloju-ogonno-97b90b1a2/ ]
 - Building in public 🚀
 
 ## License
