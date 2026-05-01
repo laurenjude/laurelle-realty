@@ -57,9 +57,13 @@ export function AuthProvider({ children }) {
 
       console.log("[Auth] Fetching profile for user:", u.id);
 
+      // On INITIAL_SESSION a fetch error often means the JWT hasn't been
+      // refreshed yet — Supabase will fire TOKEN_REFRESHED momentarily and
+      // retry. Keep loading=true in that case so ProtectedRoute never acts
+      // on stale (null) profile data. For every other event we always finalize.
+      let shouldFinalize = true;
+
       try {
-        // Race the query against a 5-second timeout so a stalled network
-        // request never leaves loading=true forever
         const profileQuery = supabase
           .from("profiles")
           .select("*")
@@ -74,17 +78,27 @@ export function AuthProvider({ children }) {
 
         if (error) {
           console.error("[Auth] Profile fetch returned error:", error.message);
+          setProfile(null);
+          if (event === "INITIAL_SESSION") {
+            shouldFinalize = false;
+            console.log("[Auth] Deferring loading resolution — waiting for TOKEN_REFRESHED");
+          }
         } else {
           console.log("[Auth] Profile fetched successfully:", data?.full_name ?? "null");
+          setProfile(data || null);
         }
-
-        setProfile(data || null);
       } catch (err) {
         console.error("[Auth] Profile fetch error:", err.message);
         setProfile(null);
+        if (event === "INITIAL_SESSION") {
+          shouldFinalize = false;
+          console.log("[Auth] Deferring loading resolution — waiting for TOKEN_REFRESHED");
+        }
       } finally {
-        setLoading(false);
-        console.log("[Auth] Loading state set to false");
+        if (shouldFinalize) {
+          setLoading(false);
+          console.log("[Auth] Loading state set to false");
+        }
       }
     });
 
