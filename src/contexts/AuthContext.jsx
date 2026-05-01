@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 
 export const AuthContext = createContext(null);
@@ -8,11 +8,44 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function fetchProfile(userId) {
-    if (!userId) {
-      setProfile(null);
-      return null;
+  // Tracks whether INITIAL_SESSION has been processed this page load.
+  // On refresh Supabase fires SIGNED_IN *before* INITIAL_SESSION — the
+  // SIGNED_IN is an internal artifact and its profile fetch hangs due to
+  // a Supabase client lock. We ignore it until INITIAL_SESSION arrives.
+  const initialSessionHandledRef = useRef(false);
+
+  // Dedup: prevents two concurrent profile fetches for the same user id.
+  const fetchInFlightRef = useRef(null);
+
+  // Fetch with one automatic retry after 1 s, 5 s timeout per attempt.
+  async function fetchProfileWithRetry(userId, attempt = 1) {
+    const profileQuery = supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    const timeoutGuard = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Profile fetch timed out after 5s")), 5000),
+    );
+
+    try {
+      const { data, error } = await Promise.race([profileQuery, timeoutGuard]);
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      if (attempt < 2) {
+        console.log("[Auth] Retrying profile fetch in 1s...");
+        await new Promise((r) => setTimeout(r, 1000));
+        return fetchProfileWithRetry(userId, attempt + 1);
+      }
+      throw err;
     }
+  }
+
+  // Simple fetch used only by refreshProfile (user-initiated, no retry needed)
+  async function fetchProfile(userId) {
+    if (!userId) { setProfile(null); return null; }
     const { data } = await supabase
       .from("profiles")
       .select("*")
@@ -22,7 +55,7 @@ export function AuthProvider({ children }) {
     return data;
   }
 
-  // Safety net: if loading is still true after 8s something is stuck
+  // Safety net: if loading is still true after 8s, force it false
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading((prev) => {
@@ -41,64 +74,62 @@ export function AuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("[Auth] State changed:", event, session?.user?.email ?? "no user");
-      const u = session?.user ?? null;
-      setUser(u);
 
+      const u = session?.user ?? null;
+
+      // ── No user: clear everything ──────────────────────────────────
       if (!u) {
+        setUser(null);
         setProfile(null);
         setLoading(false);
         console.log("[Auth] Loading state set to false (no user)");
         return;
       }
 
+      // ── SIGNED_IN before INITIAL_SESSION: refresh artifact, ignore ─
+      // Supabase fires SIGNED_IN first on every page refresh. Its profile
+      // fetch hangs (Supabase client lock) and would set loading=false with
+      // profile=null before the cleaner INITIAL_SESSION fetch arrives.
+      if (event === "SIGNED_IN" && !initialSessionHandledRef.current) {
+        console.log("[Auth] Ignoring pre-INITIAL_SESSION SIGNED_IN (refresh artifact)");
+        return;
+      }
+
+      // ── Mark INITIAL_SESSION ───────────────────────────────────────
       if (event === "INITIAL_SESSION") {
+        initialSessionHandledRef.current = true;
         console.log("[Auth] INITIAL_SESSION event received, user:", u.id);
       }
 
+      // ── TOKEN_REFRESHED: update user object only, profile unchanged ─
+      if (event === "TOKEN_REFRESHED") {
+        setUser(u);
+        console.log("[Auth] Token refreshed — user updated, profile unchanged");
+        return;
+      }
+
+      setUser(u);
+
+      // ── Dedup: skip if already fetching for this user ──────────────
+      if (fetchInFlightRef.current === u.id) {
+        console.log("[Auth] Skipping duplicate profile fetch for", u.id);
+        return;
+      }
+
+      fetchInFlightRef.current = u.id;
       console.log("[Auth] Fetching profile for user:", u.id);
 
-      // On INITIAL_SESSION a fetch error often means the JWT hasn't been
-      // refreshed yet — Supabase will fire TOKEN_REFRESHED momentarily and
-      // retry. Keep loading=true in that case so ProtectedRoute never acts
-      // on stale (null) profile data. For every other event we always finalize.
-      let shouldFinalize = true;
-
       try {
-        const profileQuery = supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", u.id)
-          .single();
-
-        const timeoutGuard = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Profile fetch timed out after 5s")), 5000),
-        );
-
-        const { data, error } = await Promise.race([profileQuery, timeoutGuard]);
-
-        if (error) {
-          console.error("[Auth] Profile fetch returned error:", error.message);
-          setProfile(null);
-          if (event === "INITIAL_SESSION") {
-            shouldFinalize = false;
-            console.log("[Auth] Deferring loading resolution — waiting for TOKEN_REFRESHED");
-          }
-        } else {
-          console.log("[Auth] Profile fetched successfully:", data?.full_name ?? "null");
-          setProfile(data || null);
-        }
+        const data = await fetchProfileWithRetry(u.id);
+        console.log("[Auth] Profile fetched successfully:", data?.full_name ?? "null");
+        setProfile(data || null);
       } catch (err) {
         console.error("[Auth] Profile fetch error:", err.message);
         setProfile(null);
-        if (event === "INITIAL_SESSION") {
-          shouldFinalize = false;
-          console.log("[Auth] Deferring loading resolution — waiting for TOKEN_REFRESHED");
-        }
       } finally {
-        if (shouldFinalize) {
-          setLoading(false);
-          console.log("[Auth] Loading state set to false");
-        }
+        fetchInFlightRef.current = null;
+        setLoading(false);
+        console.log("[Auth] Loading state set to false");
       }
     });
 
@@ -113,7 +144,6 @@ export function AuthProvider({ children }) {
     });
     if (error) throw error;
 
-    // If profile wasn't created by trigger yet, create it manually
     if (data.user) {
       await supabase.from("profiles").upsert(
         {
