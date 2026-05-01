@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { MapPin, Bed, Bath, Maximize2, Heart } from 'lucide-react'
+import { MapPin, Bed, Bath, Maximize2 } from 'lucide-react'
 import { formatPrice, getListingLabel, getPropertyTypeLabel } from '../../utils/formatters'
+import SavePropertyButton from './SavePropertyButton'
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=70&auto=format&fit=crop'
 
@@ -55,15 +56,10 @@ export default function PropertyCard({ property }) {
           )}
         </div>
 
-        {/* Wishlist */}
-        <button
-          className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-400 hover:text-error hover:bg-white transition-all duration-200 hover:scale-110"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-          aria-label="Save property"
-          title="Save to wishlist"
-        >
-          <Heart size={15} />
-        </button>
+        {/* Save button */}
+        <div className="absolute top-3 right-3">
+          <SavePropertyButton propertyId={id} size={15} />
+        </div>
 
         {/* Property type chip */}
         {property_type && (

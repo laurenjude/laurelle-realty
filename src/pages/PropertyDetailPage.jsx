@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import {
   Bed, Bath, Maximize2, MapPin, Calendar, Tag,
@@ -12,6 +12,9 @@ import Button from '../components/ui/Button'
 import Input, { Textarea } from '../components/ui/Input'
 import { PageLoader } from '../components/ui/LoadingSpinner'
 import { formatPrice, formatDate, getListingLabel, getPropertyTypeLabel } from '../utils/formatters'
+import SavePropertyButton from '../components/properties/SavePropertyButton'
+import BookViewingModal from '../components/properties/BookViewingModal'
+import useAuth from '../hooks/useAuth'
 
 const AMENITY_ICONS = {
   pool: '🏊', gym: '🏋️', parking: '🅿️', security: '🔐',
@@ -160,8 +163,19 @@ function InquiryModal({ property, onClose }) {
 
 export default function PropertyDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const { property, loading, error } = useProperty(id)
   const [showInquiry, setShowInquiry] = useState(false)
+  const [showViewing, setShowViewing] = useState(false)
+
+  function handleBookViewing() {
+    if (!user) {
+      navigate('/login', { state: { from: { pathname: `/properties/${id}` } } })
+    } else {
+      setShowViewing(true)
+    }
+  }
 
   if (loading) return <PageLoader />
 
@@ -326,12 +340,19 @@ export default function PropertyDetailPage() {
 
               {/* CTA buttons */}
               <div className="flex flex-col gap-3">
-                <Button variant="primary" size="lg" className="w-full" onClick={() => setShowInquiry(true)}>
-                  Book a Viewing
+                <Button variant="primary" size="lg" className="w-full" onClick={handleBookViewing}>
+                  <Calendar size={16} />
+                  {user ? 'Book a Viewing' : 'Log In to Book Viewing'}
                 </Button>
                 <Button variant="outline" size="lg" className="w-full" onClick={() => setShowInquiry(true)}>
                   Send Enquiry
                 </Button>
+                <div className="flex items-center gap-2">
+                  <SavePropertyButton propertyId={id} size={16} className="!rounded-xl !p-3" />
+                  <span className="text-xs text-muted">
+                    {user ? 'Save to wishlist' : 'Log in to save'}
+                  </span>
+                </div>
               </div>
 
               {/* Contact info */}
@@ -363,7 +384,7 @@ export default function PropertyDetailPage() {
               <Button variant="outline" size="md" className="flex-1" onClick={() => setShowInquiry(true)}>
                 Enquire
               </Button>
-              <Button variant="primary" size="md" className="flex-1" onClick={() => setShowInquiry(true)}>
+              <Button variant="primary" size="md" className="flex-1" onClick={handleBookViewing}>
                 Book Viewing
               </Button>
             </div>
@@ -375,6 +396,13 @@ export default function PropertyDetailPage() {
       {showInquiry && (
         <InquiryModal property={property} onClose={() => setShowInquiry(false)} />
       )}
+
+      {/* Book viewing modal */}
+      <BookViewingModal
+        isOpen={showViewing}
+        onClose={() => setShowViewing(false)}
+        property={property}
+      />
     </>
   )
 }
