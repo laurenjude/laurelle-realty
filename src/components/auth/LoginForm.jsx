@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import Input from "../ui/Input";
+import PasswordInput from "../ui/PasswordInput";
 import Button from "../ui/Button";
 
 export default function LoginForm() {
@@ -91,9 +92,9 @@ export default function LoginForm() {
       />
 
       <div>
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
+          name="password"
           placeholder="Your password"
           value={form.password}
           error={errors.password}

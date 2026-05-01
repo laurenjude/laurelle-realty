@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import Input from "../ui/Input";
+import PasswordInput from "../ui/PasswordInput";
 import Button from "../ui/Button";
 
 const PASSWORD_RE = /^(?=.*[0-9]).{8,}$/;
@@ -183,9 +184,9 @@ export default function SignUpForm() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <Input
+        <PasswordInput
           label="Password"
-          type="password"
+          name="password"
           placeholder="Min. 8 chars + 1 number"
           value={form.password}
           error={errors.password}
@@ -193,9 +194,9 @@ export default function SignUpForm() {
           autoComplete="new-password"
           required
         />
-        <Input
+        <PasswordInput
           label="Confirm Password"
-          type="password"
+          name="confirmPassword"
           placeholder="Repeat your password"
           value={form.confirmPassword}
           error={errors.confirmPassword}

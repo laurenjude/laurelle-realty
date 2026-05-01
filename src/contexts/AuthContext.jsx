@@ -23,19 +23,30 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null;
-      setUser(u);
-      fetchProfile(u?.id).finally(() => setLoading(false));
-    });
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Auth] State changed:", event, session?.user?.email ?? "no user");
       const u = session?.user ?? null;
       setUser(u);
-      await fetchProfile(u?.id);
-      setLoading(false);
+      if (!u) {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", u.id)
+          .single();
+        setProfile(data || null);
+      } catch (err) {
+        console.error("[Auth] Profile fetch error:", err);
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -74,9 +85,13 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    console.log("[Auth] Signing out...");
     setUser(null);
     setProfile(null);
+    setLoading(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("[Auth] Sign out error:", error);
+    else console.log("[Auth] Sign out complete");
   }
 
   async function updateProfile(updates) {

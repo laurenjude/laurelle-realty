@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import Input from "../../components/ui/Input";
+import PasswordInput from "../../components/ui/PasswordInput";
 import Button from "../../components/ui/Button";
 
 const NIGERIAN_PHONE_RE = /^(\+234|0)[0-9]{10}$/;
@@ -211,9 +212,9 @@ export default function ProfilePage() {
             onSubmit={handlePasswordChange}
             className="space-y-5"
             noValidate>
-            <Input
+            <PasswordInput
               label="New Password"
-              type="password"
+              name="newPassword"
               placeholder="Min. 8 characters + 1 number"
               value={pwForm.newPassword}
               error={pwErrors.newPassword}
@@ -221,9 +222,9 @@ export default function ProfilePage() {
               autoComplete="new-password"
               required
             />
-            <Input
+            <PasswordInput
               label="Confirm New Password"
-              type="password"
+              name="confirmPassword"
               placeholder="Repeat your new password"
               value={pwForm.confirmPassword}
               error={pwErrors.confirmPassword}
