@@ -131,6 +131,13 @@ export default function Navbar() {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
+              {loading && (
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-8 rounded-lg bg-gray-100 animate-pulse" />
+                  <div className="w-20 h-9 rounded-xl bg-gray-100 animate-pulse" />
+                </div>
+              )}
+
               {!loading && !user && (
                 <>
                   <Link
@@ -246,7 +253,12 @@ export default function Navbar() {
             ))}
 
             <div className="mt-2 pt-3 border-t border-gray-100">
-              {!loading && !user ? (
+              {loading ? (
+                <div className="flex flex-col gap-2">
+                  <div className="h-11 rounded-xl bg-gray-100 animate-pulse" />
+                  <div className="h-11 rounded-xl bg-gray-100 animate-pulse" />
+                </div>
+              ) : !user ? (
                 <div className="flex flex-col gap-2">
                   <Link
                     to="/login"

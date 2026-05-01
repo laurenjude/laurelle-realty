@@ -22,6 +22,20 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  // Safety net: if loading is still true after 8s something is stuck
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          console.warn("[Auth] Safety timeout — forcing loading false");
+          return false;
+        }
+        return prev;
+      });
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const {
       data: { subscription },
@@ -29,23 +43,48 @@ export function AuthProvider({ children }) {
       console.log("[Auth] State changed:", event, session?.user?.email ?? "no user");
       const u = session?.user ?? null;
       setUser(u);
+
       if (!u) {
         setProfile(null);
         setLoading(false);
+        console.log("[Auth] Loading state set to false (no user)");
         return;
       }
+
+      if (event === "INITIAL_SESSION") {
+        console.log("[Auth] INITIAL_SESSION event received, user:", u.id);
+      }
+
+      console.log("[Auth] Fetching profile for user:", u.id);
+
       try {
-        const { data } = await supabase
+        // Race the query against a 5-second timeout so a stalled network
+        // request never leaves loading=true forever
+        const profileQuery = supabase
           .from("profiles")
           .select("*")
           .eq("id", u.id)
           .single();
+
+        const timeoutGuard = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Profile fetch timed out after 5s")), 5000),
+        );
+
+        const { data, error } = await Promise.race([profileQuery, timeoutGuard]);
+
+        if (error) {
+          console.error("[Auth] Profile fetch returned error:", error.message);
+        } else {
+          console.log("[Auth] Profile fetched successfully:", data?.full_name ?? "null");
+        }
+
         setProfile(data || null);
       } catch (err) {
-        console.error("[Auth] Profile fetch error:", err);
+        console.error("[Auth] Profile fetch error:", err.message);
         setProfile(null);
       } finally {
         setLoading(false);
+        console.log("[Auth] Loading state set to false");
       }
     });
 
