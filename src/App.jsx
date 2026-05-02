@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { lazy, Suspense } from "react";
+
+const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { SavedPropertiesProvider } from "./contexts/SavedPropertiesContext";
@@ -97,6 +100,11 @@ export default function App() {
                 <Route path="viewings" element={<AdminViewingsPage />} />
               </Route>
             </Routes>
+
+            {/* AI chat widget — visible on every page, lazy-loaded after main bundle */}
+            <Suspense fallback={null}>
+              <ChatWidget />
+            </Suspense>
           </SavedPropertiesProvider>
         </AuthProvider>
       </BrowserRouter>
