@@ -7,7 +7,6 @@ import TypingIndicator from "./TypingIndicator";
 export default function ChatWindow({ isOpen, onClose, messages, onSend, isSending }) {
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to latest message
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -20,26 +19,44 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
       aria-label="Laurelle Assistant chat"
       aria-modal="false"
       className={[
-        // Base layout
         "fixed z-40 flex flex-col bg-white overflow-hidden",
-        // Mobile: full-screen overlay
+        // Mobile (<768px): true full-screen overlay
         "inset-0",
-        // Desktop: fixed-size window above the bubble
-        "sm:inset-auto sm:bottom-[104px] sm:right-4 lg:right-6",
-        "sm:w-[380px] sm:h-[580px]",
-        "sm:rounded-2xl sm:shadow-2xl sm:border sm:border-gray-100",
-        // Open / close animation
-        "transition-all duration-300 ease-out",
+        // Desktop (≥768px): corner window, height capped so it never overflows viewport
+        "md:inset-auto md:bottom-[90px] md:right-6",
+        "md:w-[380px] md:h-[580px] md:max-h-[calc(100vh_-_120px)]",
+        "md:rounded-2xl md:shadow-2xl md:border md:border-gray-100",
+        // Animation — 250ms, GPU-accelerated, respects prefers-reduced-motion
+        "transition-all duration-[250ms] ease-out motion-reduce:transition-none",
         isOpen
           ? "opacity-100 translate-y-0 scale-100 pointer-events-auto"
-          : "opacity-0 translate-y-full sm:translate-y-8 sm:scale-95 pointer-events-none",
+          : "opacity-0 translate-y-full md:translate-y-4 md:scale-95 pointer-events-none",
       ].join(" ")}
     >
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────────
+          On mobile the close button moves to the LEFT (order-first) so it
+          matches native app conventions (WhatsApp / Messages style).
+          On desktop it stays on the RIGHT (md:order-last).
+          paddingTop absorbs the iOS/Android status-bar safe-area so the
+          header background fills behind the notch correctly.
+      ─────────────────────────────────────────────────────────────── */}
       <div
-        className="flex items-center gap-3 px-4 py-3.5 shrink-0"
-        style={{ background: "#0F4C3A" }}
+        className="flex items-center gap-3 px-4 shrink-0"
+        style={{
+          background: "#0F4C3A",
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)",
+          paddingBottom: "14px",
+        }}
       >
+        {/* Close button — LEFT on mobile, RIGHT on desktop */}
+        <button
+          onClick={onClose}
+          aria-label="Close chat"
+          className="order-first md:order-last w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <X size={20} />
+        </button>
+
         {/* Avatar */}
         <div
           className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-bold text-white text-base"
@@ -58,23 +75,17 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
             <span className="text-white/70 text-xs">Online</span>
           </div>
         </div>
-
-        {/* Close */}
-        <button
-          onClick={onClose}
-          aria-label="Close chat"
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-        >
-          <X size={18} />
-        </button>
       </div>
 
-      {/* ── Messages ──────────────────────────────────────────────── */}
+      {/* ── Messages ────────────────────────────────────────────────── */}
       <div
         aria-live="polite"
         aria-label="Chat messages"
-        className="flex-1 overflow-y-auto px-4 pt-4 pb-2 chat-scroll"
-        style={{ background: "#F5F0E6" }}
+        className="flex-1 overflow-y-auto px-4 pt-4 pb-2 chat-scroll overscroll-none"
+        style={{
+          background: "#F5F0E6",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {messages.length === 0 && !isSending && (
           <p className="text-center text-xs text-gray-400 mt-8">
@@ -88,12 +99,16 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
 
         {isSending && <TypingIndicator />}
 
-        {/* Scroll anchor */}
         <div ref={messagesEndRef} className="h-1" />
       </div>
 
-      {/* ── Input ─────────────────────────────────────────────────── */}
-      <ChatInput onSend={onSend} disabled={isSending} autoFocus={isOpen} />
+      {/* ── Input — safe-area-inset-bottom keeps it above home indicator ── */}
+      <div
+        className="shrink-0 bg-white"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <ChatInput onSend={onSend} disabled={isSending} autoFocus={isOpen} />
+      </div>
     </div>
   );
 }

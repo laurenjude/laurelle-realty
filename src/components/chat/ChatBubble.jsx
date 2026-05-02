@@ -21,10 +21,10 @@ export default function ChatBubble({ isOpen, onClick }) {
       onClick={handleClick}
       aria-label={isOpen ? "Close chat" : "Open chat with Laurelle Assistant"}
       className={[
-        "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50",
-        "w-[52px] h-[52px] sm:w-[60px] sm:h-[60px]",
+        "fixed bottom-5 right-4 md:bottom-6 md:right-6 z-50",
+        "w-14 h-14 md:w-[60px] md:h-[60px]",
         "rounded-full flex items-center justify-center",
-        "transition-all duration-300 ease-out",
+        "transition-all duration-[250ms] ease-out",
         "hover:scale-105 active:scale-95",
         pulse && !isOpen ? "animate-pulse" : "",
       ]

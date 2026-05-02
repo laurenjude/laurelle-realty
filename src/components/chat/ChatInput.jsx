@@ -37,16 +37,16 @@ export default function ChatInput({ onSend, disabled, autoFocus }) {
         placeholder="Type your message..."
         disabled={disabled}
         aria-label="Chat message input"
-        className="flex-1 py-2.5 px-4 rounded-full text-sm bg-gray-50 border border-gray-100 outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/15 transition-all placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex-1 min-h-[44px] py-2.5 px-4 rounded-full text-[16px] bg-gray-50 border border-gray-100 outline-none focus:border-accent/40 focus:ring-2 focus:ring-accent/15 transition-all placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
       />
       <button
         onClick={submit}
         disabled={!text.trim() || disabled}
         aria-label="Send message"
-        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
+        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
         style={{ background: "#C9A961" }}
       >
-        <Send size={15} className="text-white ml-0.5" />
+        <Send size={16} className="text-white ml-0.5" />
       </button>
     </div>
   );
