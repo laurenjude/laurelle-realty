@@ -24,7 +24,7 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
         "inset-0",
         // Desktop (≥768px): corner window, height capped so it never overflows viewport
         "md:inset-auto md:bottom-[90px] md:right-6",
-        "md:w-[380px] md:h-[580px] md:max-h-[calc(100vh_-_120px)]",
+        "md:w-[380px] md:h-[580px] md:max-h-[calc(100vh_-_160px)]",
         "md:rounded-2xl md:shadow-2xl md:border md:border-gray-100",
         // Animation — 250ms, GPU-accelerated, respects prefers-reduced-motion
         "transition-all duration-[250ms] ease-out motion-reduce:transition-none",
@@ -52,7 +52,7 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
         <button
           onClick={onClose}
           aria-label="Close chat"
-          className="order-first md:order-last w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          className="order-last w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-white/70 hover:text-white hover:bg-white/10 transition-colors"
         >
           <X size={20} />
         </button>
@@ -72,7 +72,7 @@ export default function ChatWindow({ isOpen, onClose, messages, onSend, isSendin
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="w-2 h-2 rounded-full bg-success shrink-0" />
-            <span className="text-white/70 text-xs">Online</span>
+            <span className="text-white md:text-white/70 text-xs">Online</span>
           </div>
         </div>
       </div>
