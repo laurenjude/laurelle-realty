@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import useAuth from "./useAuth";
 
 export default function useViewings() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [viewings, setViewings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,6 +47,8 @@ export default function useViewings() {
           preferred_time: time,
           notes: notes || null,
           status: "pending",
+          buyer_email: profile?.email ?? user.email ?? null,
+          buyer_name: profile?.full_name || user.user_metadata?.full_name || user.email || "Valued Customer",
         },
       ])
       .select("*, properties(id, title, location, images)")
