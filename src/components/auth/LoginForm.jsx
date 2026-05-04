@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
+import { supabase } from "../../lib/supabase";
 import Input from "../ui/Input";
 import PasswordInput from "../ui/PasswordInput";
 import Button from "../ui/Button";
@@ -42,10 +43,17 @@ export default function LoginForm() {
     setSubmitError("");
 
     try {
-      await signIn({ email: form.email.trim(), password: form.password });
-      // Navigate to home — AuthContext's onAuthStateChange will fetch the
-      // profile and redirect to /admin or /dashboard based on role.
-      navigate("/", { replace: true });
+      const { user } = await signIn({ email: form.email.trim(), password: form.password });
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      if (profileData?.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       const msg = err?.message || "";
       if (msg.includes("Invalid login credentials")) {
