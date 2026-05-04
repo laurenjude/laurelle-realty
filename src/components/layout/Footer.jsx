@@ -177,9 +177,22 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-white/50 text-xs text-center sm:text-left">
-            © {new Date().getFullYear()} Laurelle Realty. All rights reserved.
-          </p>
+          <div className="flex flex-col items-center sm:items-start gap-1">
+            <p className="text-white/50 text-xs text-center sm:text-left">
+              © {new Date().getFullYear()} Laurelle Realty. All rights reserved.
+            </p>
+            <p className="text-white/50 text-xs text-center sm:text-left">
+              Designed &amp; Built by{" "}
+              <a
+                href="YOUR_PORTFOLIO_URL"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline hover:text-accent/80 transition-colors">
+                Lauren Jude
+              </a>
+              {" "}— AI Automation Specialist
+            </p>
+          </div>
           <div className="flex items-center gap-4 text-xs text-white/50">
             <a
               href="#"

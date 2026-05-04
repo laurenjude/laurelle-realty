@@ -4,6 +4,8 @@ import { lazy, Suspense } from "react";
 
 const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
 
+import ScrollToTop from "./components/ui/ScrollToTop";
+import ScrollToTopButton from "./components/ui/ScrollToTopButton";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SavedPropertiesProvider } from "./contexts/SavedPropertiesContext";
 
@@ -54,6 +56,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <SavedPropertiesProvider>
+            <ScrollToTop />
             <Routes>
               {/* Public routes — Navbar + Footer */}
               <Route element={<PublicLayout />}>
@@ -105,6 +108,7 @@ export default function App() {
             <Suspense fallback={null}>
               <ChatWidget />
             </Suspense>
+            <ScrollToTopButton />
           </SavedPropertiesProvider>
         </AuthProvider>
       </BrowserRouter>

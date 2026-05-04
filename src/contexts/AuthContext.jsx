@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   // Dedup: prevents two concurrent profile fetches for the same user id.
   const fetchInFlightRef = useRef(null);
 
-  // Fetch with one automatic retry after 1 s, 5 s timeout per attempt.
+  // Fetch with one automatic retry after 2 s, 15 s timeout per attempt.
   async function fetchProfileWithRetry(userId, attempt = 1) {
     const profileQuery = supabase
       .from("profiles")
@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
       .single();
 
     const timeoutGuard = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Profile fetch timed out after 5s")), 5000),
+      setTimeout(() => reject(new Error("Profile fetch timed out after 15s")), 15000),
     );
 
     try {
@@ -35,8 +35,8 @@ export function AuthProvider({ children }) {
       return data;
     } catch (err) {
       if (attempt < 2) {
-        console.log("[Auth] Retrying profile fetch in 1s...");
-        await new Promise((r) => setTimeout(r, 1000));
+        console.log("[Auth] Retrying profile fetch in 2s...");
+        await new Promise((r) => setTimeout(r, 2000));
         return fetchProfileWithRetry(userId, attempt + 1);
       }
       throw err;
@@ -55,7 +55,8 @@ export function AuthProvider({ children }) {
     return data;
   }
 
-  // Safety net: if loading is still true after 8s, force it false
+  // Safety net: if loading is still true after 35s, force it false.
+  // Must be longer than worst-case: 2 attempts × 15s timeout + 2s retry delay = 32s.
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading((prev) => {
@@ -65,7 +66,7 @@ export function AuthProvider({ children }) {
         }
         return prev;
       });
-    }, 8000);
+    }, 35000);
     return () => clearTimeout(timer);
   }, []);
 
