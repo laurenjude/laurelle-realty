@@ -184,13 +184,13 @@ export default function Footer() {
             <p className="text-white/50 text-xs text-center sm:text-left">
               Designed &amp; Built by{" "}
               <a
-                href="YOUR_PORTFOLIO_URL"
+                href="https://laurens-potfolio.vercel.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-accent underline hover:text-accent/80 transition-colors">
                 Lauren Jude
-              </a>
-              {" "}— AI Automation Specialist
+              </a>{" "}
+              AI Automation Specialist
             </p>
           </div>
           <div className="flex items-center gap-4 text-xs text-white/50">
