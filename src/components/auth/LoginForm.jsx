@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import Input from "../ui/Input";
@@ -8,28 +8,12 @@ import Button from "../ui/Button";
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, user, profile, loading: authLoading } = useAuth();
+  const { signIn } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [attempted, setAttempted] = useState(false);
-
-  const from = location.state?.from?.pathname;
-
-  // Redirect after profile is loaded post-login
-  useEffect(() => {
-    if (!attempted || authLoading) return;
-    if (user && profile) {
-      if (profile.role === "admin") {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate(from && from !== "/login" ? from : "/dashboard", { replace: true });
-      }
-    }
-  }, [attempted, authLoading, user, profile]);
 
   function set(key, val) {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -59,7 +43,9 @@ export default function LoginForm() {
 
     try {
       await signIn({ email: form.email.trim(), password: form.password });
-      setAttempted(true);
+      // Navigate to home — AuthContext's onAuthStateChange will fetch the
+      // profile and redirect to /admin or /dashboard based on role.
+      navigate("/", { replace: true });
     } catch (err) {
       const msg = err?.message || "";
       if (msg.includes("Invalid login credentials")) {
@@ -125,10 +111,10 @@ export default function LoginForm() {
         type="submit"
         variant="primary"
         size="lg"
-        loading={loading || (attempted && authLoading)}
-        disabled={loading || (attempted && authLoading)}
+        loading={loading}
+        disabled={loading}
         className="w-full">
-        {loading || (attempted && authLoading) ? "Logging in..." : "Log In"}
+        {loading ? "Logging in..." : "Log In"}
       </Button>
 
       <p className="text-center text-sm text-muted">

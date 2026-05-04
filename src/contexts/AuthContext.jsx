@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -124,6 +126,17 @@ export function AuthProvider({ children }) {
         const data = await fetchProfileWithRetry(u.id);
         console.log("[Auth] Profile fetched successfully:", data?.full_name ?? "null");
         setProfile(data || null);
+        // Fresh login (SIGNED_IN) — redirect based on role.
+        // INITIAL_SESSION is a page refresh; never redirect then.
+        if (event === "SIGNED_IN") {
+          if (data?.role === "admin") {
+            console.log("[Auth] Fresh login — admin → /admin");
+            navigate("/admin", { replace: true });
+          } else {
+            console.log("[Auth] Fresh login — buyer → /dashboard");
+            navigate("/dashboard", { replace: true });
+          }
+        }
       } catch (err) {
         console.error("[Auth] Profile fetch error:", err.message);
         setProfile(null);
